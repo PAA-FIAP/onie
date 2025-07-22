@@ -1,48 +1,31 @@
-name: Build and Publish ONIE for QFX5200
+name: Build ONIE for QFX5200
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish:
+  build-onie:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout your repo
-        uses: actions/checkout@v4
-
-      - name: Install build dependencies
+      - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            build-essential curl gawk git unzip \
-            python3 python3-pip libssl-dev bc \
-            binutils bison flex libncurses-dev autoconf automake
+          sudo apt-get install -y git make build-essential curl unzip python3 python3-pip \
+            g++ libssl-dev autoconf automake libtool pkg-config
 
-      - name: Clone ONIE source (working QFX5200 commit)
+      - name: Clone ONIE repository
         run: |
           git clone --recursive https://github.com/opencomputeproject/onie.git
           cd onie
-          git checkout 71efc5ff9f83e99a19ef2ae4d707c2e198fcae44
           git submodule update --init --recursive
 
       - name: Build ONIE for QFX5200
         run: |
           cd onie/build-config
-          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0 V=1
+          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
 
-      - name: List output files (debug)
+      - name: Show final build output
         run: |
           ls -lh onie/build/images/x86_64-juniper_qfx5200-r0 || true
           ls -lh onie/build/x86_64-juniper_qfx5200-r0 || true
-
-      - name: Prepare installer for GitHub Pages
-        run: |
-          mkdir -p public
-          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public

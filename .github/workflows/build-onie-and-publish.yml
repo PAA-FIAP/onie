@@ -8,10 +8,11 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout this workflow repo (optional)
-        uses: actions/checkout@v4
+      - name: Checkout ONIE source
+        run: |
+          git clone --recursive https://github.com/opencomputeproject/onie.git
 
-      - name: Install build dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -42,22 +43,12 @@ jobs:
             u-boot-tools \
             zlib1g-dev
 
-      - name: Clone ONIE repository
-        run: |
-          git clone --recursive https://github.com/opencomputeproject/onie.git
-          cd onie
-          git submodule update --init --recursive
-
-      - name: Confirm Makefile exists
-        run: |
-          test -f onie/Makefile || (echo "Makefile missing!" && exit 1)
-
       - name: Build ONIE for Juniper QFX5200
         run: |
-          cd onie
+          cd onie/build-config
           make -j$(nproc) MACHINE=juniper_qfx5200
 
-      - name: List ONIE build output
+      - name: List build output
         run: |
           ls -lh onie/build/images/x86_64-juniper_qfx5200-r0 || true
           ls -lh onie/build/x86_64-juniper_qfx5200-r0 || true

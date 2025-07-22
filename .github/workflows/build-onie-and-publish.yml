@@ -1,4 +1,4 @@
-name: Build ONIE for QFX5200
+name: Build ONIE for Juniper QFX5200
 
 on:
   workflow_dispatch:
@@ -28,29 +28,25 @@ jobs:
             texinfo libelf-dev \
             debianutils
 
-      - name: Check Makefile Exists
-        run: |
-          ls -l onie/build-config/Makefile
-
       - name: Build ONIE for Juniper QFX5200
         run: |
-          cd onie/build-config
-          make -j$(nproc) MACHINE=juniper_qfx5200 V=1
+          cd onie
+          make -j$(nproc) MACHINE=juniper_qfx5200
 
       - name: Show build output paths
         run: |
-          find onie/build -type f | grep -i 'qfx\|onie\|.bin\|.iso' || echo "No output files found."
+          echo "Searching for generated ONIE binaries..."
+          find build -type f -iname "*qfx5200*" || echo "No output found."
 
-      - name: List expected build folders
+      - name: List expected output folders
         run: |
-          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0 || true
-          ls -lh onie/build/x86_64-juniper_qfx5200-r0 || true
+          ls -lh build/images/x86_64-juniper_qfx5200-r0 || true
+          ls -lh build/x86_64-juniper_qfx5200-r0 || true
 
-      - name: Upload ONIE Artifacts
-        if: success()
+      - name: Upload ONIE Artifacts (if found)
         uses: actions/upload-artifact@v4
         with:
           name: onie-artifacts
           path: |
-            onie/build/images/x86_64-juniper_qfx5200-r0/**
-            onie/build/x86_64-juniper_qfx5200-r0/**
+            onie/build/images/x86_64-juniper_qfx5200-r0/
+            onie/build/x86_64-juniper_qfx5200-r0/

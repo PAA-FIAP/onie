@@ -1,24 +1,47 @@
-name: Build ONIE for QFX5200 (Diagnostic)
+name: Build and Publish ONIE for QFX5200
 
 on:
   workflow_dispatch:
 
 jobs:
-  debug-build:
+  build-and-publish:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Install dependencies
-        run: sudo apt update && sudo apt install -y build-essential git curl unzip python3 gawk libssl-dev bc xz-utils
-      - name: Clone ONIE
-        run: git clone --recursive https://github.com/opencomputeproject/onie.git && cd onie && git submodule update --init --recursive
-      - name: Show directory structure
         run: |
-          tree -L 2 onie
-      - name: Attempt build
+          sudo apt update
+          sudo apt install -y build-essential git curl unzip python3 gawk libssl-dev bc xz-utils tree
+
+      - name: Clone ONIE repo
         run: |
+          git clone --recursive https://github.com/opencomputeproject/onie.git
           cd onie
-          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0 V=1
-      - name: Show build artifacts
+          git submodule update --init --recursive
+          tree -L 2
+
+      - name: Build ONIE for QFX5200
         run: |
-          tree -L 3 onie/build
+          cd onie/build-config
+          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0 V=1
+
+      - name: List build outputs
+        run: |
+          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0 || true
+          ls -lh onie/build/x86_64-juniper_qfx5200-r0 || true
+
+      - name: Prepare public artifacts
+        run: |
+          mkdir -p public
+          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/ || true
+          cp onie/build/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/ || true
+          ls -lh public
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public

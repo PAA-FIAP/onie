@@ -21,26 +21,20 @@ jobs:
           git clone https://github.com/opencomputeproject/onie.git
           cd onie
           git submodule update --init --recursive
-          ls -l build-config/Makefile
 
       - name: Build ONIE for QFX5200
         run: |
-          cd onie/build-config
+          cd onie
           make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
 
-      - name: List built images
+      - name: List built image files
         run: |
-          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0/
+          ls -lh onie/build/x86_64-juniper_qfx5200-r0/
 
-      - name: Prepare public directory
+      - name: Copy ONIE installer to public dir
         run: |
           mkdir -p public
-          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-x86_64-juniper_qfx5200-r0.bin public/
-          echo "Installer copied to public directory"
-
-      - name: Show contents of public directory
-        run: |
-          ls -lh public/
+          cp onie/build/x86_64-juniper_qfx5200-r0/onie-installer-x86_64-juniper_qfx5200-r0.bin public/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

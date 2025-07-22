@@ -1,16 +1,13 @@
-name: Build and Publish ONIE (QFX5200)
+name: Build ONIE QFX5200
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish:
+  build-onie:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout ONIE source
-        uses: actions/checkout@v4
-
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -20,21 +17,20 @@ jobs:
             libncurses5-dev libncursesw5-dev autoconf automake \
             texinfo help2man libtool pkg-config
 
+      - name: Clone ONIE source
+        run: git clone https://github.com/opencomputeproject/onie.git
+
       - name: Build ONIE for QFX5200
         run: |
+          cd onie
           make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
 
-      - name: Generate SHA256 checksum
-        run: |
-          cd build/x86_64-juniper_qfx5200-r0
-          sha256sum * > SHA256SUMS
-
-      - name: Copy files for GitHub Pages
+      - name: Prepare GitHub Pages output
         run: |
           mkdir -p public/onie/x86_64-juniper_qfx5200-r0
-          cp -v build/x86_64-juniper_qfx5200-r0/* public/onie/x86_64-juniper_qfx5200-r0/
+          cp -v onie/build/x86_64-juniper_qfx5200-r0/* public/onie/x86_64-juniper_qfx5200-r0/
 
-      - name: Deploy to GitHub Pages
+      - name: Publish to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

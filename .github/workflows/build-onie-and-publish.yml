@@ -8,37 +8,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout your repo
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install build dependencies
         run: |
-          sudo apt update
-          sudo apt install -y build-essential git curl unzip python3 gawk libssl-dev bc xz-utils tree
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential curl gawk git unzip \
+            python3 python3-pip libssl-dev bc
 
-      - name: Clone ONIE repo
+      - name: Clone ONIE source (QFX5200 supported commit)
         run: |
-          git clone --recursive https://github.com/opencomputeproject/onie.git
+          git clone https://github.com/opencomputeproject/onie.git
           cd onie
+          git checkout 5a3b95ef1e7727aa55e36f63a9022e0e384b3f9a
           git submodule update --init --recursive
-          tree -L 2
+
+      - name: List available ONIE platforms (debug)
+        run: |
+          cd onie/build-config
+          make list-platforms | grep juniper || true
 
       - name: Build ONIE for QFX5200
         run: |
           cd onie/build-config
           make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0 V=1
 
-      - name: List build outputs
+      - name: Show output files
         run: |
           ls -lh onie/build/images/x86_64-juniper_qfx5200-r0 || true
           ls -lh onie/build/x86_64-juniper_qfx5200-r0 || true
 
-      - name: Prepare public artifacts
+      - name: Prepare installer for GitHub Pages
         run: |
           mkdir -p public
-          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/ || true
-          cp onie/build/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/ || true
-          ls -lh public
+          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

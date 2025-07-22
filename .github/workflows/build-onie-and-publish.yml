@@ -1,47 +1,24 @@
-name: Build and Publish ONIE for QFX5200
+name: Build ONIE for QFX5200 (Diagnostic)
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish:
+  debug-build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout GitHub repo (for GitHub Pages deployment)
-        uses: actions/checkout@v4
-
-      - name: Install build dependencies
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y build-essential git curl unzip python3 gawk libssl-dev bc xz-utils
+      - name: Clone ONIE
+        run: git clone --recursive https://github.com/opencomputeproject/onie.git && cd onie && git submodule update --init --recursive
+      - name: Show directory structure
         run: |
-          sudo apt update
-          sudo apt install -y \
-            build-essential git curl unzip python3 python3-pip gawk \
-            libssl-dev bc xz-utils bison flex libncurses-dev
-
-      - name: Clone ONIE source (known good commit for QFX5200)
+          tree -L 2 onie
+      - name: Attempt build
         run: |
-          git clone --recursive https://github.com/opencomputeproject/onie.git
           cd onie
-          git checkout 71efc5ff9f83e99a19ef2ae4d707c2e198fcae44
-          git submodule update --init --recursive
-          ls -l build-config/Makefile
-
-      - name: Build ONIE for QFX5200
+          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0 V=1
+      - name: Show build artifacts
         run: |
-          cd onie/build-config
-          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
-
-      - name: List build output
-        run: |
-          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0/
-
-      - name: Prepare public folder for GitHub Pages
-        run: |
-          mkdir -p public
-          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-* public/
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          tree -L 3 onie/build

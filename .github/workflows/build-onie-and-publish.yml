@@ -8,36 +8,60 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout this GitHub repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install ONIE build dependencies
+      - name: Install build dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential git curl unzip python3 python3-pip gawk libssl-dev bc xz-utils
+          sudo apt install -y \
+            build-essential \
+            git \
+            curl \
+            unzip \
+            python3 \
+            python3-pip \
+            gawk \
+            libssl-dev \
+            bc \
+            bison \
+            flex \
+            u-boot-tools \
+            pkg-config \
+            libncurses-dev \
+            libelf-dev \
+            cpio
 
-      - name: Clone ONIE source with submodules
+      - name: Clone ONIE source (known good commit)
         run: |
           git clone --recursive https://github.com/opencomputeproject/onie.git
-          ls -l onie/build-config/Makefile
+          cd onie
+          git checkout 1033b637ffc38c8cb0a07a21d3c6eb936832da92
+          git submodule update --init --recursive
+          ls -l build-config/Makefile
 
-      - name: Build ONIE for QFX5200
+      - name: List supported platforms
         run: |
           cd onie/build-config
-          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
+          ls -d x86_64-*
 
-      - name: List output files
+      - name: Build ONIE for QFX5200 (verbose)
+        run: |
+          cd onie/build-config
+          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0 V=1
+
+      - name: Check output files
         run: |
           ls -lh onie/build/images/x86_64-juniper_qfx5200-r0/
 
-      - name: Prepare output for GitHub Pages
+      - name: Prepare GitHub Pages output
         run: |
           mkdir -p public
           cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/
+          ls -lh public/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          force_orphan: true

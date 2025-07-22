@@ -8,31 +8,36 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: Install dependencies
+      - name: Checkout ONIE source
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git curl unzip gawk \
-            build-essential libtool \
-            autoconf automake \
-            texinfo pkg-config \
-            python3 libncurses5-dev \
-            bc zlib1g-dev
+            curl wget unzip git g++ make gcc \
+            libtool-bin pkg-config gawk libncurses5-dev \
+            python3 python3-pip python3-distutils python-is-python3 \
+            bison flex xz-utils rsync texinfo
 
-      - name: Clone ONIE repo (fixed commit with toolchain configs)
+      - name: Set environment variables
         run: |
-          git clone https://github.com/opencomputeproject/onie.git
-          cd onie
-          git checkout e825b4a0d
+          echo "MACHINE=juniper_qfx5200" >> $GITHUB_ENV
+          echo "MACHINEROOT=build-config/machine/juniper" >> $GITHUB_ENV
 
-      - name: Build ONIE for Juniper QFX5200
+      - name: Prepare build folders
         run: |
-          cd onie/build-config
-          make -j$(nproc) MACHINEROOT=../machine/juniper MACHINE=juniper_qfx5200 all
+          ls -lah
+          ls -lah build-config/machine/juniper
 
-      - name: Show available images
+      - name: Start build
         run: |
-          find onie/build -type f | grep -iE 'qfx|onie|\.bin|\.iso' || echo "No output files found."
+          make -j$(nproc) MACHINEROOT=${{ env.MACHINEROOT }} MACHINE=${{ env.MACHINE }} all
+
+      - name: List build outputs
+        run: |
+          echo "Showing outputs under onie/build ..."
+          find onie/build -type f | grep -i 'qfx\|onie\|.bin\|.iso' || echo "No output files found."
 
       - name: Upload ONIE Artifacts
         uses: actions/upload-artifact@v4

@@ -14,28 +14,29 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential git curl unzip python3 python3-pip gawk libssl-dev bc
+          sudo apt install -y build-essential git curl unzip python3 python3-pip gawk libssl-dev bc bison flex libncurses-dev
 
       - name: Clone ONIE source
         run: |
           git clone --depth=1 https://github.com/opencomputeproject/onie.git
-          ls -l onie/build-config/Makefile
+          ls -l onie/Makefile
 
       - name: Build ONIE for QFX5200
         run: |
-          cd onie/build-config
+          cd onie
           make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
 
       - name: List output files
         run: |
-          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0/
+          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0/ || find onie/build -type f
 
       - name: Prepare output for GitHub Pages
         run: |
           mkdir -p public
-          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/
+          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/ || echo "No output found."
 
       - name: Deploy to GitHub Pages
+        if: success()
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

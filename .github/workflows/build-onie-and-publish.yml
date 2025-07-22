@@ -5,50 +5,52 @@ on:
 
 jobs:
   build-onie:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout ONIE source
-        run: |
-          git clone --recursive https://github.com/opencomputeproject/onie.git
+      - name: Checkout ONIE Source
+        uses: actions/checkout@v4
+        with:
+          repository: opencomputeproject/onie
+          path: onie
 
-      - name: Install dependencies
+      - name: Install Required Packages
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
-            curl \
-            wget \
-            unzip \
-            git \
-            python3 \
-            python3-pip \
-            python3-setuptools \
-            python3-venv \
-            python3-distutils \
-            gawk \
-            flex \
-            bison \
-            libssl-dev \
-            bc \
-            kmod \
-            cpio \
-            libelf-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            xz-utils \
-            file \
-            rsync \
-            ccache \
-            u-boot-tools \
-            zlib1g-dev
+            build-essential autoconf automake bison flex \
+            gawk curl wget unzip libtool libssl-dev \
+            python3 python3-pip python3-setuptools \
+            python3-venv python-is-python3 \
+            pkg-config git cmake rsync \
+            fakeroot socat xz-utils \
+            libncurses5-dev libncursesw5-dev \
+            texinfo libelf-dev \
+            debianutils
+
+      - name: Check Makefile Exists
+        run: |
+          ls -l onie/build-config/Makefile
 
       - name: Build ONIE for Juniper QFX5200
         run: |
           cd onie/build-config
-          make -j$(nproc) MACHINE=juniper_qfx5200
+          make -j$(nproc) MACHINE=juniper_qfx5200 V=1
 
-      - name: List build output
+      - name: Show build output paths
+        run: |
+          find onie/build -type f | grep -i 'qfx\|onie\|.bin\|.iso' || echo "No output files found."
+
+      - name: List expected build folders
         run: |
           ls -lh onie/build/images/x86_64-juniper_qfx5200-r0 || true
           ls -lh onie/build/x86_64-juniper_qfx5200-r0 || true
+
+      - name: Upload ONIE Artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: onie-artifacts
+          path: |
+            onie/build/images/x86_64-juniper_qfx5200-r0/**
+            onie/build/x86_64-juniper_qfx5200-r0/**

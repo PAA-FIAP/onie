@@ -26,18 +26,14 @@ jobs:
           cd onie/build-config
           make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
 
+      - name: List output files
+        run: |
+          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0/
+
       - name: Prepare output for GitHub Pages
         run: |
           mkdir -p public
-          cp onie/build/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/
-
-      - name: Create download page
-        run: |
-          FILE=$(ls public/onie-installer-*.bin | xargs -n1 basename)
-          echo "<html><body><h1>ONIE Installer for QFX5200</h1>" > public/index.html
-          echo "<p><a href='$FILE' download>Download ONIE Installer</a></p>" >> public/index.html
-          echo "<p>Direct link: <code>https://paa-fiap.github.io/onie/$FILE</code></p>" >> public/index.html
-          echo "</body></html>" >> public/index.html
+          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

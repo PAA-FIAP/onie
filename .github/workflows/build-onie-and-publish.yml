@@ -20,33 +20,31 @@ jobs:
           sudo apt-get install -y \
             build-essential autoconf automake bison flex \
             gawk curl wget unzip libtool libssl-dev \
-            python3 python3-pip python3-setuptools \
-            python3-venv python-is-python3 \
-            pkg-config git cmake rsync \
-            fakeroot socat xz-utils \
-            libncurses5-dev libncursesw5-dev \
-            texinfo libelf-dev \
+            python3 python3-pip python3-setuptools python3-venv \
+            python-is-python3 \
+            pkg-config git cmake rsync fakeroot socat xz-utils \
+            libncurses5-dev libncursesw5-dev texinfo libelf-dev \
             debianutils
 
       - name: Build ONIE for Juniper QFX5200
         run: |
-          cd onie
+          cd onie/build-config
           make -j$(nproc) MACHINE=juniper_qfx5200
 
-      - name: Show build output paths
+      - name: Show output files
         run: |
-          echo "Searching for generated ONIE binaries..."
-          find build -type f -iname "*qfx5200*" || echo "No output found."
+          echo "Looking for ONIE output files..."
+          find ../build -type f \( -iname '*qfx*' -o -iname '*.bin' -o -iname '*.iso' \) || echo "No output found."
 
-      - name: List expected output folders
+      - name: List output folders (if present)
         run: |
-          ls -lh build/images/x86_64-juniper_qfx5200-r0 || true
-          ls -lh build/x86_64-juniper_qfx5200-r0 || true
+          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0 || true
+          ls -lh onie/build/x86_64-juniper_qfx5200-r0 || true
 
-      - name: Upload ONIE Artifacts (if found)
+      - name: Upload Build Artifacts (if any)
         uses: actions/upload-artifact@v4
         with:
           name: onie-artifacts
           path: |
-            onie/build/images/x86_64-juniper_qfx5200-r0/
-            onie/build/x86_64-juniper_qfx5200-r0/
+            onie/build/images/x86_64-juniper_qfx5200-r0/**
+            onie/build/x86_64-juniper_qfx5200-r0/**

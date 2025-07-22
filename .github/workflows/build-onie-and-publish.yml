@@ -8,15 +8,15 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Install essential build dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             build-essential curl unzip git python3 python3-pip \
             g++ libssl-dev autoconf automake libtool pkg-config \
-            bison flex asciidoc u-boot-tools
+            bison flex asciidoc u-boot-tools bc cpio xz-utils
 
-      - name: Clone ONIE repository
+      - name: Clone ONIE repo
         run: |
           git clone --recursive https://github.com/opencomputeproject/onie.git
           cd onie
@@ -24,20 +24,20 @@ jobs:
 
       - name: Build ONIE for QFX5200
         run: |
-          cd onie/build-config
-          make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
+          cd onie
+          make -j$(nproc) MACHINE=juniper_qfx5200
 
-      - name: List output files
+      - name: List build outputs
         run: |
-          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0 || true
-          ls -lh onie/build/x86_64-juniper_qfx5200-r0 || true
+          ls -lh onie/build/images/juniper_qfx5200 || true
+          ls -lh onie/build/juniper_qfx5200 || true
 
       - name: Upload ONIE Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: onie-qfx5200-output
+          name: onie-qfx5200-build
           path: |
-            onie/build/images/x86_64-juniper_qfx5200-r0/*.bin
-            onie/build/images/x86_64-juniper_qfx5200-r0/*.tar.gz
-            onie/build/images/x86_64-juniper_qfx5200-r0/*.iso
+            onie/build/images/juniper_qfx5200/*.bin
+            onie/build/images/juniper_qfx5200/*.iso
+            onie/build/images/juniper_qfx5200/*.tar.gz
           if-no-files-found: warn

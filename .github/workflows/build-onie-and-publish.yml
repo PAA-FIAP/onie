@@ -28,12 +28,12 @@ jobs:
 
       - name: List output files
         run: |
-          ls -lh onie/build/x86_64-juniper_qfx5200-r0/
+          ls -lh onie/build/images/x86_64-juniper_qfx5200-r0/
 
       - name: Prepare output for GitHub Pages
         run: |
           mkdir -p public
-          cp onie/build/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/
+          cp onie/build/images/x86_64-juniper_qfx5200-r0/onie-installer-*.bin public/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

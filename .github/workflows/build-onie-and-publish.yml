@@ -1,4 +1,4 @@
-name: Build and Publish ONIE QFX5200
+name: Build ONIE and Publish
 
 on:
   workflow_dispatch:
@@ -20,18 +20,14 @@ jobs:
       - name: Clone ONIE source
         run: |
           git clone --depth=1 https://github.com/opencomputeproject/onie.git
+          ls -l onie/Makefile  # Confirm Makefile exists
 
       - name: Build ONIE for QFX5200
         run: |
           cd onie
           make -j$(nproc) PLATFORM=x86_64-juniper_qfx5200-r0
 
-      - name: Generate SHA256SUMS
-        run: |
-          cd onie/build/x86_64-juniper_qfx5200-r0
-          sha256sum * > SHA256SUMS
-
-      - name: Move files to public for Pages
+      - name: Prepare files for GitHub Pages
         run: |
           mkdir -p public/onie/x86_64-juniper_qfx5200-r0
           cp -v onie/build/x86_64-juniper_qfx5200-r0/* public/onie/x86_64-juniper_qfx5200-r0/

@@ -5,52 +5,40 @@ on:
 
 jobs:
   build-onie:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
-      - name: Checkout ONIE source
-        uses: actions/checkout@v4
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
-            gcc \
-            g++ \
-            make \
-            python3 \
-            unzip \
-            wget \
-            curl \
-            git \
-            libncurses5-dev \
-            libssl-dev \
-            bc \
-            xz-utils \
-            bison \
-            flex \
-            libelf-dev \
-            u-boot-tools \
-            fakeroot \
-            cpio \
-            rsync \
-            gawk
+            git curl unzip gawk \
+            build-essential libtool \
+            autoconf automake \
+            texinfo pkg-config \
+            python3 libncurses5-dev \
+            bc zlib1g-dev
 
-      - name: Build ONIE for QFX5200
-        working-directory: build-config
+      - name: Clone ONIE repo (fixed commit with toolchain configs)
         run: |
+          git clone https://github.com/opencomputeproject/onie.git
+          cd onie
+          git checkout e825b4a0d
+
+      - name: Build ONIE for Juniper QFX5200
+        run: |
+          cd onie/build-config
           make -j$(nproc) MACHINEROOT=../machine/juniper MACHINE=juniper_qfx5200 all
 
-      - name: List final image files
+      - name: Show available images
         run: |
-          find build-config/build -type f | grep -i 'qfx\|onie\|.bin\|.iso' || echo "No output files found."
+          find onie/build -type f | grep -iE 'qfx|onie|\.bin|\.iso' || echo "No output files found."
 
       - name: Upload ONIE Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: onie-artifacts
           path: |
-            build-config/build/images/x86_64-juniper_qfx5200-r0/**
-            build-config/build/x86_64-juniper_qfx5200-r0/**
+            onie/build/images/x86_64-juniper_qfx5200-r0/**
+            onie/build/x86_64-juniper_qfx5200-r0/**
           if-no-files-found: warn
